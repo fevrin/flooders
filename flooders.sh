@@ -43,7 +43,7 @@ check_dest_port() {
 
 check_syn() {
    echo "checking syns committed..."
-   total_syns=$(grep -Eoi --color=always '(0x002)' $file | sort | uniq -c | sed -r 's;^ +;;')
+   total_syns=$(check_file_for "$(grep -Eoi --color=always '(0x002)' $file)")
    if [[ -n "$total_syns" ]]; then
       echo "$total_syns"
    else
@@ -62,7 +62,12 @@ total_packets() {
 
 check_dns_amp() {
    echo "checking DNS amplification..."
-   check_file_for "$(grep -Eoi --color=always 'Recursion desired: Do query recursively' $file)"
+   total_dns_amp=$(check_file_for "$(grep -Eoi --color=always 'Recursion desired: Do query recursively' $file)")
+   if [[ -n "$total_dns_amp" ]]; then
+      echo "$total_dns_amp"
+   else
+      echo "0 dns amp"
+   fi
 }
 
 strip_file
