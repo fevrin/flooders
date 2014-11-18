@@ -1,6 +1,7 @@
 #!/bin/bash
 
 file=/tmp/1
+hits=5
 
 strip_file() {
    sed -i.bak -re 's;^time=.+msg="(.+)"$;\1;' $file
@@ -8,7 +9,7 @@ strip_file() {
 
 check_dest_ip() {
 # returns a list of desination IPs, their counts, and their organization
-   echo "checking destination IP..."
+   echo "checking top $hits destination IPs..."
 
    ip_regex="([0-9]{1,3}\.){3}[0-9]{1,3}"
    local output=$(check_file_for "$(grep -Eoi --color=always "destination: $ip_regex" $file | sed 's;destination: ;;i')")
@@ -33,11 +34,11 @@ get-orgname-from-ip() {
 
 check_file_for() {
    local specifics="$1"
-   [[ -n $specifics ]] && echo "$specifics" | sort | uniq -c | sort -n | tail -n5 | sed -r 's;^ +;;'
+   [[ -n $specifics ]] && echo "$specifics" | sort | uniq -c | sort -n | tail -n$hits | sed -r 's;^ +;;'
 }
 
 check_dest_port() {
-   echo "checking destination port..."
+   echo "checking top $hits destination ports..."
    check_file_for "$(grep -Eoi --color=always 'destination port: [0-9]+' $file | sed 's;destination port: ;;i')"
 }
 
@@ -54,6 +55,11 @@ check_syn() {
 check_udp() {
    echo "checking udp..."
    check_file_for "$(grep -Eoi --color=always 'user datagram protocol[^"\n]*' $file)"
+}
+
+check_blank_packets(){
+   echo "checking blank packets..."
+   grep -Eoi --color=always '  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' $file
 }
 
 total_packets() {
