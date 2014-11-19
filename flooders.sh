@@ -7,12 +7,23 @@ strip_file() {
    sed -i.bak -re 's;^time=.+msg="(.+)"$;\1;' $file
 }
 
-check_dest_ip() {
+check_ip() {
 # returns a list of desination IPs, their counts, and their organization
-   echo "checking top $hits destination IPs..."
+   local input="$1"
+   local direction=""
+
+   if [[ "$input" =~ (src|source) ]]; then
+      direction="source"
+   elif [[ "$input" =~ (dst|destination)? ]]; then
+      direction="destination"
+   fi
+   echo "input: $input"
+   echo "direction: $direction"
+
+   echo "checking top $hits $direction IPs..."
 
    ip_regex="([0-9]{1,3}\.){3}[0-9]{1,3}"
-   local output=$(check_file_for "$(grep -Eoi --color=always "destination: $ip_regex" $file | sed 's;destination: ;;i')")
+   local output=$(check_file_for "$(grep -Eoi --color=always "$direction: $ip_regex" $file | sed "s;$direction: ;;i")")
 
    echo "$output" | while read; do
       local count=$(echo $REPLY | grep -Eo '^[0-9]+')
@@ -22,6 +33,16 @@ check_dest_ip() {
 
       echo -e "$REPLY ($orgname)"
    done
+}
+
+check_src_ip() {
+# returns a list of source IPs, their counts, and their organization
+   check_ip src
+}
+
+check_dest_ip() {
+# returns a list of desination IPs, their counts, and their organization
+   check_ip dst
 }
 
 get-orgname-from-ip() {
@@ -77,6 +98,9 @@ check_dns_amp() {
 }
 
 strip_file
+
+check_src_ip
+echo
 
 check_dest_ip
 echo
