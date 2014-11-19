@@ -17,8 +17,6 @@ check_ip() {
    elif [[ "$input" =~ (dst|destination)? ]]; then
       direction="destination"
    fi
-   echo "input: $input"
-   echo "direction: $direction"
 
    echo "checking top $hits $direction IPs..."
 
