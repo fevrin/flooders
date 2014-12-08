@@ -1,10 +1,10 @@
 #!/bin/bash
 
 file=/tmp/1
-hits=5
+hits=15
 
 strip_file() {
-   sed -i.bak -re 's;^time=.+msg="(.+)"$;\1;' $file
+   sed -i.bak -re 's;^time=.+msg="(.+)?"$;\1;' -e 's;\\n;\n;g' $file
 }
 
 check_ip() {
@@ -48,7 +48,8 @@ get-orgname-from-ip() {
 # input: a valid IP address
 # output: OrgName for the given IP
    ip=$1
-   whois $ip | sed -rne 's;^(OrgName|org-name|descr):\s+(.+)$;\2;p' | sort -u | head -n1
+   # kill whois if it takes too long on an IP
+   timeout -s15 2 whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr):\s+(.+)$;\2;p' | sort -u | head -n1
 }
 
 check_file_for() {
@@ -71,9 +72,26 @@ check_syn() {
    fi
 }
 
+check_bogus_header() {
+   echo "checking for bogus headers..."
+
+   total_bogus_header=$(check_file_for "$(grep -Eoi --color=always 'Header length: .*\(bogus, must be at least 20\)' $file)")
+   if [[ -n "$total_bogus_header" ]]; then
+      echo "$total_bogus_header"
+   else
+      echo "0 bogus headers"
+   fi
+}
+
 check_udp() {
    echo "checking udp..."
-   check_file_for "$(grep -Eoi --color=always 'user datagram protocol[^"\n]*' $file)"
+
+   total_udp_packets=$(check_file_for "$(grep -Eoi --color=always 'user datagram protocol[^"\n]*' $file)")
+   if [[ -n "$total_udp_packets" ]]; then
+      echo "$total_udp_packets"
+   else
+      echo "0 udp packets"
+   fi
 }
 
 check_blank_packets(){
@@ -87,6 +105,7 @@ total_packets() {
 
 check_dns_amp() {
    echo "checking DNS amplification..."
+
    total_dns_amp=$(check_file_for "$(grep -Eoi --color=always 'Recursion desired: Do query recursively' $file)")
    if [[ -n "$total_dns_amp" ]]; then
       echo "$total_dns_amp"
@@ -113,3 +132,6 @@ check_udp
 echo
 
 check_dns_amp
+echo
+
+check_bogus_header
