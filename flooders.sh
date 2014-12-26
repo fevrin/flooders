@@ -5,6 +5,8 @@ hits=15
 
 strip_file() {
    sed -i.bak -re 's;^time=.+msg="(.+)?"$;\1;' -e 's;\\n;\n;g' $file
+   local contents=$(grep -v '^@cee:{"msg"' $file)
+   echo "$contents" > $file
 }
 
 check_ip() {
@@ -114,6 +116,11 @@ check_dns_amp() {
    fi
 }
 
+check_total_packets_captured() {
+   local count=$(sed -rne 's;^Frame ([0-9]+):.*$;\1;p' $file | tail -n1)
+   echo "total packets captured: $count"
+}
+
 strip_file
 
 check_src_ip
@@ -135,3 +142,5 @@ check_dns_amp
 echo
 
 check_bogus_header
+echo
+check_total_packets_captured
