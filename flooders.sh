@@ -4,7 +4,7 @@ file=/tmp/1
 hits=15
 
 strip_file() {
-   sed -i.bak -re 's;^time=.+msg="(.+)?"$;\1;' -e 's;\\n;\n;g' $file
+   sed -i.bak -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' -e 's;\\n;\n;g' $file
    local contents=$(grep -v '^@cee:{"msg"' $file)
    echo "$contents" > $file
 }
