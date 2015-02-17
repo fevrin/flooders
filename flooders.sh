@@ -4,7 +4,7 @@ file=/tmp/1
 hits=15
 
 strip_file() {
-   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' -e 's;\\n;\n;g' $file | grep -v '^@cee:{"msg"')
+   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' $file | egrep -v '(^@cee:{"msg"|\\n)')
    if [[ -n "$contents" ]]; then
       echo "$contents" > $file
    else
@@ -54,7 +54,7 @@ get-orgname-from-ip() {
 # output: OrgName for the given IP
    ip=$1
    # kill whois if it takes too long on an IP
-   timeout -s15 2 whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr):\s+(.+)$;\2;p' | sort -u | head -n1
+   timeout -s15 2 whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr|owner):\s+(.+)$;\2;p' | sort -u | head -n1
 }
 
 check_file_for() {
@@ -120,7 +120,7 @@ check_dns_amp() {
 }
 
 check_total_packets_captured() {
-   local count=$(sed -rne 's;^Frame ([0-9]+):.*$;\1;p' $file | tail -n1)
+   local count=$(grep -c ^Frame $file)
    echo "total packets captured: $count"
 }
 
