@@ -4,9 +4,12 @@ file=/tmp/1
 hits=15
 
 strip_file() {
-   sed -i.bak -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' -e 's;\\n;\n;g' $file
-   local contents=$(grep -v '^@cee:{"msg"' $file)
-   echo "$contents" > $file
+   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' -e 's;\\n;\n;g' $file | grep -v '^@cee:{"msg"')
+   if [[ -n "$contents" ]]; then
+      echo "$contents" > $file
+   else
+      echo "couldn't strip file further"
+   fi
 }
 
 check_ip() {
@@ -66,7 +69,7 @@ check_dest_port() {
 
 check_syn() {
    echo "checking syns committed..."
-   total_syns=$(check_file_for "$(grep -Eoi --color=always '(0x002)' $file)")
+   total_syns=$(check_file_for "$(grep -Eoi --color=always '(0x002|1. = Syn: Set)' $file)")
    if [[ -n "$total_syns" ]]; then
       echo "$total_syns"
    else
