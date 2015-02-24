@@ -69,7 +69,7 @@ check_dest_port() {
 
 check_syn() {
    echo "checking syns committed..."
-   total_syns=$(check_file_for "$(grep -Eoi --color=always '(0x002|1. = Syn: Set)' $file)")
+   total_syns=$(check_file_for "$(grep -Eoi --color=always '1. = Syn: Set' $file)")
    if [[ -n "$total_syns" ]]; then
       echo "$total_syns"
    else
