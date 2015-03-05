@@ -120,7 +120,7 @@ check_dns_amp() {
 }
 
 check_total_packets_captured() {
-   local count=$(grep -c ^Frame $file)
+   local count=$(grep -c '^Frame [0-9]' $file)
    echo "total packets captured: $count"
 }
 
