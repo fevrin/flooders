@@ -3,6 +3,10 @@
 file=/tmp/1
 hits=15
 
+if [[ $(which timeout) ]]; then
+   timeout_command="timeout -s15 2"
+fi
+
 strip_file() {
    local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' $file | egrep -v '(^@cee:{"msg"|\\n)')
    if [[ -n "$contents" ]]; then
@@ -54,7 +58,7 @@ get-orgname-from-ip() {
 # output: OrgName for the given IP
    ip=$1
    # kill whois if it takes too long on an IP
-   timeout -s15 2 whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr|owner):\s+(.+)$;\2;p' | sort -u | head -n1
+   $timeout_command whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr|owner):\s+(.+)$;\2;p' | sort -u | head -n1
 }
 
 check_file_for() {
