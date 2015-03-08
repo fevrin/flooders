@@ -26,11 +26,11 @@ check_ip() {
    echo "checking top $hits $direction IPs..."
 
    ip_regex="([0-9]{1,3}\.){3}[0-9]{1,3}"
-   local output=$(check_file_for "$(grep -Eoi --color=always "$direction: $ip_regex" $file | sed "s;$direction: ;;i")")
+   local output=$(check_file_for "$(egrep -oi --color=always "$direction: $ip_regex" $file | sed "s;$direction: ;;i")")
 
    echo "$output" | while read; do
-      local count=$(echo $REPLY | grep -Eo '^[0-9]+')
-      local ip=$(echo $REPLY | grep -Eo "$ip_regex")
+      local count=$(echo $REPLY | egrep -o '^[0-9]+')
+      local ip=$(echo $REPLY | egrep -o "$ip_regex")
       local orgname="$(get-orgname-from-ip $ip)"
       orgname=${orgname:="not found"}
 
@@ -62,14 +62,19 @@ check_file_for() {
    [[ -n $specifics ]] && echo "$specifics" | sort | uniq -c | sort -n | tail -n$hits | sed -r 's;^ +;;'
 }
 
+check_src_port() {
+   echo "checking top $hits source ports..."
+   check_file_for "$(egrep -oi --color=always 'source port: [0-9]+' $file | sed 's;source port: ;;i')"
+}
+
 check_dest_port() {
    echo "checking top $hits destination ports..."
-   check_file_for "$(grep -Eoi --color=always 'destination port: [0-9]+' $file | sed 's;destination port: ;;i')"
+   check_file_for "$(egrep -oi --color=always 'destination port: [0-9]+' $file | sed 's;destination port: ;;i')"
 }
 
 check_syn() {
    echo "checking syns committed..."
-   total_syns=$(check_file_for "$(grep -Eoi --color=always '1. = Syn: Set' $file)")
+   total_syns=$(check_file_for "$(egrep -oi --color=always '1. = Syn: Set' $file)")
    if [[ -n "$total_syns" ]]; then
       echo "$total_syns"
    else
@@ -80,7 +85,7 @@ check_syn() {
 check_bogus_header() {
    echo "checking for bogus headers..."
 
-   total_bogus_header=$(check_file_for "$(grep -Eoi --color=always 'Header length: .*\(bogus, must be at least 20\)' $file)")
+   total_bogus_header=$(check_file_for "$(egrep -oi --color=always 'Header length: .*\(bogus, must be at least 20\)' $file)")
    if [[ -n "$total_bogus_header" ]]; then
       echo "$total_bogus_header"
    else
@@ -91,7 +96,7 @@ check_bogus_header() {
 check_udp() {
    echo "checking udp..."
 
-   total_udp_packets=$(check_file_for "$(grep -Eoi --color=always 'user datagram protocol[^"\n]*' $file)")
+   total_udp_packets=$(check_file_for "$(egrep -oi --color=always 'user datagram protocol[^"\n]*' $file)")
    if [[ -n "$total_udp_packets" ]]; then
       echo "$total_udp_packets"
    else
@@ -101,17 +106,17 @@ check_udp() {
 
 check_blank_packets(){
    echo "checking blank packets..."
-   grep -Eoi --color=always '  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' $file
+   egrep -oi --color=always '  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' $file
 }
 
 total_packets() {
-   grep -E --color=always "Frame [0-9]+:" $file | tail
+   egrep --color=always "Frame [0-9]+:" $file | tail
 }
 
 check_dns_amp() {
    echo "checking DNS amplification..."
 
-   total_dns_amp=$(check_file_for "$(grep -Eoi --color=always 'Recursion desired: Do query recursively' $file)")
+   total_dns_amp=$(check_file_for "$(egrep -oi --color=always 'Recursion desired: Do query recursively' $file)")
    if [[ -n "$total_dns_amp" ]]; then
       echo "$total_dns_amp"
    else
@@ -120,7 +125,7 @@ check_dns_amp() {
 }
 
 check_total_packets_captured() {
-   local count=$(grep -c '^Frame [0-9]' $file)
+   local count=$(egrep -o '^Frame [0-9]+:' $file | sort -u | wc -l)
    echo "total packets captured: $count"
 }
 
@@ -130,6 +135,9 @@ check_src_ip
 echo
 
 check_dest_ip
+echo
+
+check_src_port
 echo
 
 check_dest_port
