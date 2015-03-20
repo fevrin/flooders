@@ -1,6 +1,9 @@
 #!/bin/bash
 
+# define the file containing the plaintext (not pcap) tcpdump
 file=/tmp/1
+
+# define how many results to show for source and destination IPs and ports
 hits=15
 
 if [[ $(which timeout) ]]; then
