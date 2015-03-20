@@ -16,6 +16,11 @@ strip_file() {
    fi
 }
 
+parse_n_slurp_file() {
+   # create a copy of the file in a variable for easier/quicker processing
+   file_contents="$(egrep -oi '1. = Syn: Set|Header length: .*\(bogus, must be at least 20\)|user datagram protocol[^"\n]*|Recursion desired: Do query recursively' "$file")"
+}
+
 check_ip() {
 # returns a list of desination IPs, their counts, and their organization
    local input="$1"
@@ -78,7 +83,7 @@ check_dest_port() {
 
 check_syn() {
    echo "checking syns committed..."
-   total_syns=$(check_file_for "$(egrep -oi --color=always '1. = Syn: Set' $file)")
+   total_syns=$(check_file_for "$(echo "$file_contents" | egrep -oi --color=always '1. = Syn: Set')")
    if [[ -n "$total_syns" ]]; then
       echo "$total_syns"
    else
@@ -89,7 +94,7 @@ check_syn() {
 check_bogus_header() {
    echo "checking for bogus headers..."
 
-   total_bogus_header=$(check_file_for "$(egrep -oi --color=always 'Header length: .*\(bogus, must be at least 20\)' $file)")
+   total_bogus_header=$(check_file_for "$(echo "$file_contents" | egrep -oi --color=always 'Header length: .*\(bogus, must be at least 20\)')")
    if [[ -n "$total_bogus_header" ]]; then
       echo "$total_bogus_header"
    else
@@ -100,7 +105,7 @@ check_bogus_header() {
 check_udp() {
    echo "checking udp..."
 
-   total_udp_packets=$(check_file_for "$(egrep -oi --color=always 'user datagram protocol[^"\n]*' $file)")
+   total_udp_packets=$(echo "$file_contents" | check_file_for "$(egrep -oi --color=always 'user datagram protocol[^"\n]*')")
    if [[ -n "$total_udp_packets" ]]; then
       echo "$total_udp_packets"
    else
@@ -113,14 +118,10 @@ check_blank_packets(){
    egrep -oi --color=always '  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00' $file
 }
 
-total_packets() {
-   egrep --color=always "Frame [0-9]+:" $file | tail
-}
-
 check_dns_amp() {
    echo "checking DNS amplification..."
 
-   total_dns_amp=$(check_file_for "$(egrep -oi --color=always 'Recursion desired: Do query recursively' $file)")
+   total_dns_amp=$(check_file_for "$(echo "$file_contents" | egrep -oi --color=always 'Recursion desired: Do query recursively')")
    if [[ -n "$total_dns_amp" ]]; then
       echo "$total_dns_amp"
    else
@@ -134,6 +135,7 @@ check_total_packets_captured() {
 }
 
 strip_file
+parse_n_slurp_file
 
 check_src_ip
 echo
