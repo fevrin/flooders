@@ -2,13 +2,14 @@
 
 file=/tmp/1
 hits=15
+declare -A ip_whois_list
 
 if [[ $(which timeout) ]]; then
    timeout_command="timeout -s15 2"
 fi
 
 strip_file() {
-   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' $file | egrep -v '(^@cee:{"msg"|\\n)')
+   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"noidx.msg":")([^"]+)".*$;\2;p' $file | egrep -v '(^@cee:{"msg"|\\n)')
    if [[ -n "$contents" ]]; then
       echo "$contents" > $file
    else
@@ -61,9 +62,27 @@ get-orgname-from-ip() {
 # returns the OrgName for the given IP address
 # input: a valid IP address
 # output: OrgName for the given IP
-   ip=$1
-   # kill whois if it takes too long on an IP
-   $timeout_command whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr|owner):\s+(.+)$;\2;p' | sort -u | head -n1
+   local ip="$1"
+   local orgname="${ip_whois_list[$ip]}"
+
+   if [[ -n "$orgname" ]]; then
+      # we already checked the IP, so return its found orgname
+      echo "$orgname"
+   else
+      # perform initial WHOIS look-up
+      # kill whois if it takes too long on an IP
+      orgname="$($timeout_command whois $ip 2>/dev/null | sed -rne 's;^(OrgName|org-name|descr|owner):\s+(.+)$;\2;p' | sort -u | head -n1)"
+
+      # now add the value to the list for quicker look-up next time
+      #FIXME this isn't assigning properly.  first, the two variables
+      #are not resolving in the same step, requiring 'eval', and
+      #second, the value isn't getting assigned to the global array
+      #this seems to be a bash bug
+      #also, <http://stackoverflow.com/a/5564589/3505408>
+      ip_whois_list["$ip"]="$orgname"
+
+      echo "${ip_whois_list[$ip]}"
+   fi
 }
 
 check_file_for() {
