@@ -11,7 +11,7 @@ if [[ $(which timeout) ]]; then
 fi
 
 strip_file() {
-   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"msg":")([^"]+)".*$;\2;p' $file | egrep -v '(^@cee:{"msg"|\\n)')
+   local contents=$(sed -rne 's;^(time=.+msg="|@cee:\{"noidx.msg":")([^"]+)".*$;\2;p' $file | egrep -v '(^@cee:{"msg"|\\n)')
    if [[ -n "$contents" ]]; then
       echo "$contents" > $file
    else
